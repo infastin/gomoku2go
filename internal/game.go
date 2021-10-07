@@ -63,17 +63,25 @@ func NewGame(p1, p2 *Player, size, winCond uint) (*Game, error) {
 	return result, nil
 }
 
-func (g *Game) SetField(x, y uint) bool {
-	if g.fields[x][y] == EmptyField {
-		g.fields[x][y] = FieldType(g.curplayer) + 1
-		return true
+func (g *Game) SetField(x, y uint) (bool, error) {
+	if x >= g.size || y >= g.size {
+		return false, fmt.Errorf("Out of board bounds")
 	}
 
-	return false
+	if g.fields[x][y] == EmptyField {
+		g.fields[x][y] = FieldType(g.curplayer) + 1
+		return true, nil
+	}
+
+	return false, nil
 }
 
-func (g *Game) GetField(x, y uint) FieldType {
-	return g.fields[x][y]
+func (g *Game) GetField(x, y uint) (FieldType, error) {
+	if x >= g.size || y >= g.size {
+		return EmptyField, fmt.Errorf("Out of board bounds")
+	}
+
+	return g.fields[x][y], nil
 }
 
 func (g *Game) GetPlayerName() string {
@@ -85,6 +93,5 @@ func (g *Game) ChangePlayer() {
 }
 
 func (g *Game) CheckState() GameState {
-
 	return NotFinished
 }
