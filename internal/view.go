@@ -1,0 +1,4 @@
+package gomoku
+
+import (
+)
