@@ -1,5 +1,5 @@
 box#statusbar {
-	background-color: @wm_bg;
+	background-color: @theme_base_color;
 }
 
 box#statusbar > box {
@@ -12,6 +12,6 @@ box#statusbar > box > label {
 
 box#error {
 	background-color: @error_color;
-	color: @selected_fg_color;
+	color: @theme_selected_fg_color;
 	font-weight: bold;
 }
