@@ -63,6 +63,7 @@ func (board *BoardArea) Init(cells uint) {
 func (board *BoardArea) onResize(_ *gtk.DrawingArea, width, height int) {
 	if surf := board.GetNative().Surface(); surf != nil {
 		board.surface = surf.CreateSimilarSurface(cairo.CONTENT_COLOR, width, height)
+		board.paintBackground()
 
 		if board.cells != 0 {
 			board.Draw()
@@ -119,6 +120,18 @@ func (board *BoardArea) drawFunc(_ *gtk.DrawingArea, cr *cairo.Context, width, h
 	cr.Paint()
 }
 
+func (board *BoardArea) paintBackground() {
+	sctx := board.StyleContext()
+	bg, _ := sctx.LookupColor("theme_bg_color")
+
+	cr := cairo.Create(board.surface)
+	cr.SetSourceRGBA(float64(bg.Red()),
+		float64(bg.Green()),
+		float64(bg.Blue()),
+		float64(bg.Alpha()))
+	cr.Paint()
+}
+
 func (board *BoardArea) Draw() {
 	width := board.Width()
 	height := board.Height()
@@ -130,15 +143,8 @@ func (board *BoardArea) Draw() {
 
 	sctx := board.StyleContext()
 	fg, _ := sctx.LookupColor("theme_fg_color")
-	bg, _ := sctx.LookupColor("theme_bg_color")
 
 	cr := cairo.Create(board.surface)
-	cr.SetSourceRGBA(float64(bg.Red()),
-		float64(bg.Green()),
-		float64(bg.Blue()),
-		float64(bg.Alpha()))
-	cr.Paint()
-
 	cr.SetSourceRGBA(float64(fg.Red()),
 		float64(fg.Green()),
 		float64(fg.Blue()),
