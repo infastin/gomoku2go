@@ -48,12 +48,27 @@ func (app *Application) handleClick(x, y uint) {
 			board.DrawCross(x, y)
 		}
 
-		app.gameLogic.CheckDraw()
+		stopwatch := app.gameView.Stopwatch()
+		cplabel := app.gameView.CurrentPlayerLabel()
+		sgBtn := app.gameView.StartGameBtn()
+
+		if draw := app.gameLogic.CheckDraw(); draw {
+			stopwatch.Stop()
+			sgBtn.SetLabel("Start Game")
+			cplabel.SetText("Draw")
+			
+			return
+		}
 
 		if s, win := app.gameLogic.CheckWinner(x, y); win {
-			app.gameView.Stopwatch().Stop()
-			app.gameView.StartGameBtn().SetLabel("Start Game")
+			stopwatch.Stop()
+			sgBtn.SetLabel("Start Game")
 			board.DrawStrike(view.Strike(s))
+
+			playerName := app.gameLogic.Player(app.gameLogic.CurrentPlayer()).Name()
+			cplabel.SetText(fmt.Sprintf("%s wins", playerName))
+			
+			return
 		}
 
 		app.gameLogic.ChangePlayer()
