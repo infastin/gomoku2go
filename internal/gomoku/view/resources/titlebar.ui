@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+	<object class="GtkHeaderBar" id="titlebar">
+		<child type="start">
+			<object class="GtkButton" id="start_game">
+				<property name="label" translatable="yes">_Start Game</property>
+			</object>
+		</child>
+		<child type="title">
+			<object class="GtkLabel">
+				<property name="label">Gomoku2Go</property>
+				<property name="single-line-mode">True</property>
+				<property name="ellipsize">end</property>
+				<property name="width-chars">5</property>
+			</object>
+		</child>
+		<child type="end">
+			<object class="GtkMenuButton" id="menu_button">
+				<property name="icon-name">open-menu</property>
+				<property name="direction">none</property>
+			</object>
+		</child>
+	</object>
+</interface>

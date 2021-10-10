@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/infastin/gomoku2go/internal"
+	"github.com/infastin/gomoku2go/internal/gomoku/app"
 )
 
 func main() {

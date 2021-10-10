@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+	<schema path="/com/github/infastin/gomoku2go/" id="com.github.infastin.gomoku2go">
+		<key name="player1" type="s">
+			<default>"Player 1"</default>
+		</key>
+		<key name="player2" type="s">
+			<default>"Player 2"</default>
+		</key>
+		<key name="size" type="u">
+			<default>3</default>
+			<range min="3" max="20"/>
+		</key>
+		<key name="wincond" type="u">
+			<default>3</default>
+			<range min="3" max="20"/>
+		</key>
+	</schema>
+</schemalist>
