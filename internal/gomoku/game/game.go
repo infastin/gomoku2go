@@ -37,6 +37,7 @@ type Game struct {
 	size      uint
 	winCond   uint
 	empty     uint
+	strike    Strike
 }
 
 type Field struct {
@@ -188,25 +189,37 @@ func (g *Game) CheckDraw() bool {
 func (g *Game) CheckWinner(x, y uint) (s Strike, win bool) {
 	if s, win = g.checkWinnerAxis(x, y, 1, 0); win {
 		g.state = GameState(g.curplayer) + 1
+		g.strike = s
 		return
 	}
 
 	if s, win = g.checkWinnerAxis(x, y, 0, 1); win {
 		g.state = GameState(g.curplayer) + 1
+		g.strike = s
 		return
 	}
 
 	if s, win = g.checkWinnerAxis(x, y, 1, 1); win {
 		g.state = GameState(g.curplayer) + 1
+		g.strike = s
 		return
 	}
 
 	if s, win = g.checkWinnerAxis(x, y, 1, -1); win {
 		g.state = GameState(g.curplayer) + 1
+		g.strike = s
 		return
 	}
 
 	return
+}
+
+func (g *Game) Strike() (Strike, error) {
+	if (g.state == NotFinished) {
+		return Strike{}, fmt.Errorf("game is not finished")
+	}
+
+	return g.strike, nil
 }
 
 func (g *Game) State() GameState {

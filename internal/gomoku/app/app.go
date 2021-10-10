@@ -53,7 +53,7 @@ func (app *Application) handleClick(x, y uint) {
 		if s, win := app.gameLogic.CheckWinner(x, y); win {
 			app.gameView.Stopwatch().Stop()
 			app.gameView.StartGameBtn().SetLabel("Start Game")
-			board.DrawStrike(s.X0, s.Y0, s.X1, s.Y1)
+			board.DrawStrike(view.Strike(s))
 		}
 
 		app.gameLogic.ChangePlayer()
@@ -85,7 +85,12 @@ func (app *Application) handleRedraw() {
 		})
 	}
 
-	board.DrawShapes(vfields)
+	if app.gameLogic.State() != game.NotFinished {
+		strike, _ := app.gameLogic.Strike()
+		board.DrawShapesAndStrike(vfields, view.Strike(strike))
+	} else {
+		board.DrawShapes(vfields)
+	}
 }
 
 func (app *Application) Start() {

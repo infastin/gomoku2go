@@ -2,11 +2,9 @@ package view
 
 import (
 	_ "embed"
-	"fmt"
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/diamondburned/gotk4/pkg/pango"
 )
 
 //go:embed resources/window.ui
@@ -61,8 +59,6 @@ func NewMainWindow(app *gtk.Application) *MainWindow {
 
 	scxt := mwin.StyleContext()
 	gtk.StyleContextAddProviderForDisplay(scxt.Display(), css, gtk.STYLE_PROVIDER_PRIORITY_USER)
-
-	fmt.Println(mwin.PangoContext().FontDescription().Size(), pango.SCALE)
 
 	mwin.SetApplication(app)
 

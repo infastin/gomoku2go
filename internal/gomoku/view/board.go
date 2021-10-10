@@ -26,6 +26,11 @@ type Field struct {
 	Sh   Shape
 }
 
+type Strike struct {
+	X0, Y0 uint
+	X1, Y1 uint
+}
+
 type BoardArea struct {
 	*gtk.DrawingArea
 
@@ -261,24 +266,7 @@ func (board *BoardArea) drawCross(x, y uint, queue bool) error {
 	return nil
 }
 
-func (board *BoardArea) DrawCross(x, y uint) error {
-	return board.drawCross(x, y, true)
-}
-
-func (board *BoardArea) DrawShapes(fields []Field) {
-	for _, f := range fields {
-		switch f.Sh {
-		case Circle:
-			board.drawCircle(f.X, f.Y, false)
-		case Cross:
-			board.drawCross(f.X, f.Y, false)
-		}
-	}
-
-	board.QueueDraw()
-}
-
-func (board *BoardArea) DrawStrike(x0, y0, x1, y1 uint) error {
+func (board *BoardArea) drawStrike(s Strike, queue bool) error {
 	if board.cells == 0 {
 		return fmt.Errorf("boardArea hasn't been initialized")
 	}
@@ -299,26 +287,26 @@ func (board *BoardArea) DrawStrike(x0, y0, x1, y1 uint) error {
 	var by1 float64
 
 	switch {
-	case x0 == x1:
-		bx0 = csize*float64(x0) + csize/2
-		by0 = csize*float64(y0) + csize/6
-		bx1 = csize*float64(x1) + csize/2
-		by1 = csize*float64(y1) + (5*csize)/6
-	case y0 == y1:
-		bx0 = csize*float64(x0) + csize/6
-		by0 = csize*float64(y0) + csize/2
-		bx1 = csize*float64(x1) + (5*csize)/6
-		by1 = csize*float64(y1) + csize/2
-	case y0 < y1:
-		bx0 = csize*float64(x0) + csize/6
-		by0 = csize*float64(y0) + csize/6
-		bx1 = csize*float64(x1) + (5*csize)/6
-		by1 = csize*float64(y1) + (5*csize)/6
+	case s.X0 == s.X1:
+		bx0 = csize*float64(s.X0) + csize/2
+		by0 = csize*float64(s.Y0) + csize/6
+		bx1 = csize*float64(s.X1) + csize/2
+		by1 = csize*float64(s.Y1) + (5*csize)/6
+	case s.Y0 == s.Y1:
+		bx0 = csize*float64(s.X0) + csize/6
+		by0 = csize*float64(s.Y0) + csize/2
+		bx1 = csize*float64(s.X1) + (5*csize)/6
+		by1 = csize*float64(s.Y1) + csize/2
+	case s.Y0 < s.Y1:
+		bx0 = csize*float64(s.X0) + csize/6
+		by0 = csize*float64(s.Y0) + csize/6
+		bx1 = csize*float64(s.X1) + (5*csize)/6
+		by1 = csize*float64(s.Y1) + (5*csize)/6
 	default:
-		bx0 = csize*float64(x0) + csize/6
-		by0 = csize*float64(y0) + (5*csize)/6
-		bx1 = csize*float64(x1) + (5*csize)/6
-		by1 = csize*float64(y1) + csize/6
+		bx0 = csize*float64(s.X0) + csize/6
+		by0 = csize*float64(s.Y0) + (5*csize)/6
+		bx1 = csize*float64(s.X1) + (5*csize)/6
+		by1 = csize*float64(s.Y1) + csize/6
 	}
 
 	sctx := board.StyleContext()
@@ -328,9 +316,9 @@ func (board *BoardArea) DrawStrike(x0, y0, x1, y1 uint) error {
 	cr.Translate(float64(width)/2-(size/2), float64(height)/2-(size/2))
 
 	cr.SetSourceRGBA(float64(sbg.Red()),
-		float64(sbg.Green()),
-		float64(sbg.Blue()),
-		float64(sbg.Alpha()))
+	float64(sbg.Green()),
+	float64(sbg.Blue()),
+	float64(sbg.Alpha()))
 
 	cr.MoveTo(bx0, by0)
 	cr.LineTo(bx1, by1)
@@ -342,6 +330,54 @@ func (board *BoardArea) DrawStrike(x0, y0, x1, y1 uint) error {
 
 	return nil
 }
+
+func (board *BoardArea) DrawCross(x, y uint) error {
+	return board.drawCross(x, y, true)
+}
+
+func (board *BoardArea) DrawStrike(strike Strike) error {
+	return board.drawStrike(strike, true)
+}
+
+func (board *BoardArea) DrawShapes(fields []Field) error {
+	if board.cells == 0 {
+		return fmt.Errorf("boardArea hasn't been initialized")
+	}
+
+	for _, f := range fields {
+		switch f.Sh {
+		case Circle:
+			board.drawCircle(f.X, f.Y, false)
+		case Cross:
+			board.drawCross(f.X, f.Y, false)
+		}
+	}
+
+	board.QueueDraw()
+
+	return nil
+}
+
+func (board *BoardArea) DrawShapesAndStrike(fields []Field, strike Strike) error {
+	if board.cells == 0 {
+		return fmt.Errorf("boardArea hasn't been initialized")
+	}
+
+	for _, f := range fields {
+		switch f.Sh {
+		case Circle:
+			board.drawCircle(f.X, f.Y, false)
+		case Cross:
+			board.drawCross(f.X, f.Y, false)
+		}
+	}
+
+	board.drawStrike(strike, false)
+	board.QueueDraw()
+
+	return nil
+}
+
 
 func (board *BoardArea) Clear() {
 	if board.clickHandler != nil {
