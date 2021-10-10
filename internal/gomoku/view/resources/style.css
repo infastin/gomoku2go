@@ -1,0 +1,17 @@
+box#statusbar {
+	background-color: @wm_bg;
+}
+
+box#statusbar > box {
+	background-color: inherit;
+}
+
+box#statusbar > box > label {
+	background-color: inherit;
+}
+
+box#error {
+	background-color: @error_color;
+	color: @selected_fg_color;
+	font-weight: bold;
+}

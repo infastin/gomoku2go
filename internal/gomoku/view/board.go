@@ -8,8 +8,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/cairo"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-
-	"github.com/infastin/gomoku2go/internal/sig"
 )
 
 type Shape uint
@@ -31,8 +29,8 @@ type Field struct {
 type BoardArea struct {
 	*gtk.DrawingArea
 
-	click  sig.Signal
-	redraw sig.Signal
+	clickHandler  func(x, y uint)
+	redrawHandler func()
 
 	sneaky  *gtk.Button
 	surface *cairo.Surface
@@ -50,12 +48,16 @@ func newBoardArea(builder *gtk.Builder) *BoardArea {
 	board.SetDrawFunc(board.drawFunc)
 	board.ConnectAfter("resize", board.onResize)
 
+	return board
+}
+
+func (board *BoardArea) Init(cells uint) {
+	board.cells = cells
+
 	board.press = gtk.NewGestureClick()
 	board.press.SetButton(gdk.BUTTON_PRIMARY)
 	board.press.ConnectPressed(board.onPress)
 	board.AddController(board.press)
-
-	return board
 }
 
 func (board *BoardArea) onResize(_ *gtk.DrawingArea, width, height int) {
@@ -63,10 +65,10 @@ func (board *BoardArea) onResize(_ *gtk.DrawingArea, width, height int) {
 		board.surface = surf.CreateSimilarSurface(cairo.CONTENT_COLOR, width, height)
 
 		if board.cells != 0 {
-			board.DrawBoard(board.cells)
+			board.Draw()
 
-			if board.redraw != nil {
-				board.redraw.Emit()
+			if board.redrawHandler != nil {
+				board.redrawHandler()
 			}
 		}
 	}
@@ -75,7 +77,7 @@ func (board *BoardArea) onResize(_ *gtk.DrawingArea, width, height int) {
 func (board *BoardArea) onPress(nPress int, x, y float64) {
 	board.sneaky.GrabFocus()
 
-	if board.click == nil {
+	if board.clickHandler == nil {
 		return
 	}
 
@@ -109,7 +111,7 @@ func (board *BoardArea) onPress(nPress int, x, y float64) {
 		return
 	}
 
-	board.click.Emit(uint(cellx), uint(celly))
+	board.clickHandler(uint(cellx), uint(celly))
 }
 
 func (board *BoardArea) drawFunc(_ *gtk.DrawingArea, cr *cairo.Context, width, height int) {
@@ -117,15 +119,13 @@ func (board *BoardArea) drawFunc(_ *gtk.DrawingArea, cr *cairo.Context, width, h
 	cr.Paint()
 }
 
-func (board *BoardArea) DrawBoard(cells uint) {
-	board.cells = cells
-
+func (board *BoardArea) Draw() {
 	width := board.Width()
 	height := board.Height()
 	min := math.Min(float64(width), float64(height))
 	size := (float64(min) * 2) / 3
 
-	fcells := float64(cells)
+	fcells := float64(board.cells)
 	linew := float64(size / (strokeCoef * fcells))
 
 	sctx := board.StyleContext()
@@ -150,7 +150,7 @@ func (board *BoardArea) DrawBoard(cells uint) {
 
 	cr.Translate(float64(width)/2-(size/2), float64(height)/2-(size/2))
 
-	for i := uint(1); i < cells; i++ {
+	for i := uint(1); i < board.cells; i++ {
 		fi := float64(i)
 
 		cr.MoveTo((size/fcells)*fi, 0)
@@ -161,6 +161,8 @@ func (board *BoardArea) DrawBoard(cells uint) {
 	}
 
 	cr.Stroke()
+
+	board.QueueDraw()
 }
 
 func (board *BoardArea) drawCircle(x, y uint, queue bool) error {
@@ -270,22 +272,91 @@ func (board *BoardArea) DrawShapes(fields []Field) {
 	board.QueueDraw()
 }
 
-func (board *BoardArea) ClearBoard() {
-	if board.click != nil {
-		board.click.Close()
-		board.click = nil
+func (board *BoardArea) DrawStrike(x0, y0, x1, y1 uint) error {
+	if board.cells == 0 {
+		return fmt.Errorf("boardArea hasn't been initialized")
 	}
 
-	if board.redraw != nil {
-		board.redraw.Close()
-		board.redraw = nil
+	width := board.Width()
+	height := board.Height()
+
+	min := math.Min(float64(width), float64(height))
+	size := (float64(min) * 2) / 3
+
+	fcells := float64(board.cells)
+	linew := float64((size * 2) / (strokeCoef * fcells))
+	csize := size / fcells
+
+	var bx0 float64
+	var by0 float64
+	var bx1 float64
+	var by1 float64
+
+	switch {
+	case x0 == x1:
+		bx0 = csize*float64(x0) + csize/2
+		by0 = csize*float64(y0) + csize/6
+		bx1 = csize*float64(x1) + csize/2
+		by1 = csize*float64(y1) + (5*csize)/6
+	case y0 == y1:
+		bx0 = csize*float64(x0) + csize/6
+		by0 = csize*float64(y0) + csize/2
+		bx1 = csize*float64(x1) + (5*csize)/6
+		by1 = csize*float64(y1) + csize/2
+	case y0 < y1:
+		bx0 = csize*float64(x0) + csize/6
+		by0 = csize*float64(y0) + csize/6
+		bx1 = csize*float64(x1) + (5*csize)/6
+		by1 = csize*float64(y1) + (5*csize)/6
+	default:
+		bx0 = csize*float64(x0) + csize/6
+		by0 = csize*float64(y0) + (5*csize)/6
+		bx1 = csize*float64(x1) + (5*csize)/6
+		by1 = csize*float64(y1) + csize/6
+	}
+
+	sctx := board.StyleContext()
+	sbg, _ := sctx.LookupColor("theme_selected_bg_color")
+
+	cr := cairo.Create(board.surface)
+	cr.Translate(float64(width)/2-(size/2), float64(height)/2-(size/2))
+
+	cr.SetSourceRGBA(float64(sbg.Red()),
+		float64(sbg.Green()),
+		float64(sbg.Blue()),
+		float64(sbg.Alpha()))
+
+	cr.MoveTo(bx0, by0)
+	cr.LineTo(bx1, by1)
+
+	cr.SetLineWidth(linew)
+	cr.Stroke()
+
+	board.QueueDraw()
+
+	return nil
+}
+
+func (board *BoardArea) Clear() {
+	if board.clickHandler != nil {
+		board.clickHandler = nil
+	}
+
+	if board.redrawHandler != nil {
+		board.redrawHandler = nil
 	}
 
 	board.RemoveController(board.press)
 	board.cells = 0
 
+	sctx := board.StyleContext()
+	bg, _ := sctx.LookupColor("theme_bg_color")
+
 	cr := cairo.Create(board.surface)
-	cr.SetSourceRGB(1, 1, 1)
+	cr.SetSourceRGBA(float64(bg.Red()),
+		float64(bg.Green()),
+		float64(bg.Blue()),
+		float64(bg.Alpha()))
 	cr.Paint()
 
 	board.QueueDraw()
@@ -296,11 +367,9 @@ func (board *BoardArea) ConnectClick(handler func(x, y uint)) error {
 		return fmt.Errorf("boardArea hasn't been initialized")
 	}
 
-	if board.click == nil {
-		board.click = sig.New()
+	if board.clickHandler == nil {
+		board.clickHandler = handler
 	}
-
-	board.click.Connect(handler)
 
 	return nil
 }
@@ -310,11 +379,9 @@ func (board *BoardArea) ConnectRedraw(handler func()) error {
 		return fmt.Errorf("boardArea hasn't been initialized")
 	}
 
-	if board.redraw == nil {
-		board.redraw = sig.New()
+	if board.redrawHandler == nil {
+		board.redrawHandler = handler
 	}
-
-	board.redraw.Connect(handler)
 
 	return nil
 }

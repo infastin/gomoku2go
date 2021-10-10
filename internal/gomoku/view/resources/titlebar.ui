@@ -3,7 +3,7 @@
 	<object class="GtkHeaderBar" id="titlebar">
 		<child type="start">
 			<object class="GtkButton" id="start_game">
-				<property name="label" translatable="yes">_Start Game</property>
+				<property name="label" translatable="yes">Start Game</property>
 			</object>
 		</child>
 		<child type="title">
@@ -11,7 +11,6 @@
 				<property name="label">Gomoku2Go</property>
 				<property name="single-line-mode">True</property>
 				<property name="ellipsize">end</property>
-				<property name="width-chars">5</property>
 			</object>
 		</child>
 		<child type="end">
