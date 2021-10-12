@@ -78,3 +78,9 @@ func (s *Stopwatch) Stop() {
 		s.ticker.Stop()
 	}
 }
+
+func (s *Stopwatch) Restart() {
+	s.Stop()
+	s.Reset()
+	s.Start()
+}

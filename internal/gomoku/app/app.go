@@ -56,7 +56,6 @@ func (app *Application) handleClick(x, y uint) {
 			stopwatch.Stop()
 			sgBtn.SetLabel("Start Game")
 			cplabel.SetText("Draw")
-			
 			return
 		}
 
@@ -67,7 +66,6 @@ func (app *Application) handleClick(x, y uint) {
 
 			playerName := app.gameLogic.Player(app.gameLogic.CurrentPlayer()).Name()
 			cplabel.SetText(fmt.Sprintf("%s wins", playerName))
-			
 			return
 		}
 
@@ -137,7 +135,7 @@ func (app *Application) startGame() {
 	p2 := game.NewPlayer(p2Str)
 
 	if app.gameLogic != nil {
-		app.gameView.Stopwatch().Reset()
+		app.gameView.Stopwatch().Restart()
 		board.Clear()
 	}
 
